@@ -12,10 +12,13 @@
 #include "rest_api/controllers/SchedulesController.h"
 #include "rest_api/controllers/TemplatesController.h"
 #include "rest_api/controllers/AlertsController.h"
+#include "rest_api/controllers/ThresholdsController.h"
 #include "rest_api/controllers/BackupController.h"
 #include "rest_api/controllers/SettingsController.h"
 #include "services/CompareService.h"
 #include "services/BaselineService.h"
+#include "services/ThresholdService.h"
+#include "services/AnomalyService.h"
 
 #include <spdlog/spdlog.h>
 
@@ -33,7 +36,9 @@ void configure_drogon_app(const Settings&      settings,
                            OtaService&          ota_svc,
                            NotificationService& notif_svc,
                            CompareService&      cmp_svc,
-                           BaselineService&     baseline_svc) {
+                           BaselineService&     baseline_svc,
+                           ThresholdService&    threshold_svc,
+                           AnomalyService&      anomaly_svc) {
     auto& app = drogon::app();
 
     const auto& http = settings.network.http_listen;
@@ -51,7 +56,7 @@ void configure_drogon_app(const Settings&      settings,
     app.registerController(std::make_shared<AuthController>(auth_svc));
     app.registerController(std::make_shared<RunsController>(run_svc, baseline_svc));
     app.registerController(std::make_shared<LogsController>(log_svc));
-    app.registerController(std::make_shared<ModulesController>(mod_svc, run_svc, cmp_svc));
+    app.registerController(std::make_shared<ModulesController>(mod_svc, run_svc, cmp_svc, anomaly_svc));
     app.registerController(std::make_shared<TargetsController>(target_svc));
     app.registerController(std::make_shared<ConfigsController>(config_svc));
     app.registerController(std::make_shared<OtaController>(ota_svc));
@@ -59,6 +64,7 @@ void configure_drogon_app(const Settings&      settings,
     app.registerController(std::make_shared<SchedulesController>(schedule_svc));
     app.registerController(std::make_shared<TemplatesController>(template_svc));
     app.registerController(std::make_shared<AlertsController>());
+    app.registerController(std::make_shared<ThresholdsController>(threshold_svc));
     app.registerController(std::make_shared<BackupController>());
     app.registerController(std::make_shared<SettingsController>());
 

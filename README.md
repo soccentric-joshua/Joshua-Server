@@ -72,7 +72,17 @@ modules: - id: "com.example.temperature" name: "Temperature Monitor" description
 | GET | `/api/v1/target` | Get board info |
 | POST | `/api/v1/target/heartbeat` | Board heartbeat |
 | POST | `/api/v1/ota/upload` | Upload OTA artifact |
-| POST | `/api/v1/ota/{id}/trigger` | Trigger OTA upgrade | --- ## Decisions Log | Decision | Rationale |
+| POST | `/api/v1/ota/{id}/trigger` | Trigger OTA upgrade |
+| GET | `/api/v1/modules/{id}/trend` | Module metric trend (time-series) |
+| GET | `/api/v1/modules/{id}/distribution` | Module metric distribution (histogram) |
+| GET | `/api/v1/modules/{id}/heatmap` | Module metric heatmap (test × time cells) |
+| GET | `/api/v1/modules/{id}/anomalies` | Z-score anomaly detection over a metric |
+| GET | `/api/v1/runs/{a}/compare/{b}` | Two-run side-by-side comparison |
+| GET | `/api/v1/runs/{id}/baseline-diff` | Drift/status diff vs the mode's baseline run |
+| POST | `/api/v1/runs/{id}/baseline` | Mark a run as the baseline for its mode |
+| GET | `/api/v1/thresholds` | List threshold rules (filter by `module_id`/`test_id`) |
+| POST | `/api/v1/thresholds` | Create a typed threshold rule |
+| DELETE | `/api/v1/thresholds/{id}` | Delete a threshold rule | --- ## Decisions Log | Decision | Rationale |
 |----------|-----------|
 | gRPC sync API for unary, streaming wait-loop | Simpler than async CQ for initial impl; async CQ adds complexity without benefit at this scale |
 | Drogon for REST | Built-in PG ORM, async, WebSocket, SSE, session management |

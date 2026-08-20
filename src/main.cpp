@@ -163,7 +163,9 @@ int main() {
                                         ota_svc,
                                         notif_svc,
                                         compare_svc,
-                                        baseline_svc);
+                                        baseline_svc,
+                                        threshold_svc,
+                                        anomaly_svc);
 
     spdlog::info("Starting Drogon HTTP server on {}", settings.network.http_listen);
     drogon::app().run();  // blocks

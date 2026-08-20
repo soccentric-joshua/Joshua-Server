@@ -3,6 +3,7 @@
 #include "services/ModuleService.h"
 #include "services/RunService.h"
 #include "services/CompareService.h"
+#include "services/AnomalyService.h"
 #include <drogon/HttpController.h>
 
 namespace joshua::rest {
@@ -10,7 +11,7 @@ namespace joshua::rest {
 class ModulesController : public drogon::HttpController<ModulesController, false> {
 public:
     ModulesController(ModuleService& svc, RunService& run_svc,
-                      CompareService& cmp_svc);
+                      CompareService& cmp_svc, AnomalyService& anomaly_svc);
 
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(ModulesController::list,          "/api/v1/modules",                drogon::Get);
@@ -18,6 +19,7 @@ public:
     ADD_METHOD_TO(ModulesController::trend,         "/api/v1/modules/{id}/trend",     drogon::Get);
     ADD_METHOD_TO(ModulesController::distribution,  "/api/v1/modules/{id}/distribution", drogon::Get);
     ADD_METHOD_TO(ModulesController::heatmap,        "/api/v1/modules/{id}/heatmap",       drogon::Get);
+    ADD_METHOD_TO(ModulesController::anomalies,      "/api/v1/modules/{id}/anomalies",     drogon::Get);
     ADD_METHOD_TO(ModulesController::compare_runs,  "/api/v1/runs/{a}/compare/{b}",  drogon::Get);
     METHOD_LIST_END
 
@@ -42,6 +44,11 @@ public:
                  std::function<void(const drogon::HttpResponsePtr&)>&&,
                  std::string id);
 
+    // GET /api/v1/modules/{id}/anomalies?test_id=X&field=Y&z=3&from=T&to=T
+    void anomalies(const drogon::HttpRequestPtr&,
+                   std::function<void(const drogon::HttpResponsePtr&)>&&,
+                   std::string id);
+
     // GET /api/v1/runs/{a}/compare/{b}?drift_pct=5
     void compare_runs(const drogon::HttpRequestPtr&,
                       std::function<void(const drogon::HttpResponsePtr&)>&&,
@@ -51,6 +58,7 @@ private:
     ModuleService&  svc_;
     RunService&     run_svc_;
     CompareService& cmp_svc_;
+    AnomalyService& anomaly_svc_;
 };
 
 }  // namespace joshua::rest

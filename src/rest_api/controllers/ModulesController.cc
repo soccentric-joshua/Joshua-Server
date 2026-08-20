@@ -8,8 +8,9 @@
 namespace joshua::rest {
 
 ModulesController::ModulesController(ModuleService& svc, RunService& run_svc,
-                                      CompareService& cmp_svc)
-    : svc_(svc), run_svc_(run_svc), cmp_svc_(cmp_svc) {}
+                                      CompareService& cmp_svc,
+                                      AnomalyService& anomaly_svc)
+    : svc_(svc), run_svc_(run_svc), cmp_svc_(cmp_svc), anomaly_svc_(anomaly_svc) {}
 
 static Json::Value mod_to_json(const ModuleInfo& m) {
     Json::Value v;
@@ -140,6 +141,47 @@ void ModulesController::heatmap(
     resp["test_id"]   = test_id;
     resp["field"]     = field;
     resp["cells"]     = arr;
+    cb(drogon::HttpResponse::newHttpJsonResponse(resp));
+}
+
+void ModulesController::anomalies(
+    const drogon::HttpRequestPtr& req,
+    std::function<void(const drogon::HttpResponsePtr&)>&& cb,
+    std::string id) {
+    std::string test_id = req->getParameter("test_id");
+    std::string field   = req->getParameter("field");
+    std::string from_ts = req->getParameter("from");
+    std::string to_ts   = req->getParameter("to");
+    double z_threshold  = 3.0;
+    auto z = req->getParameter("z");
+    if (!z.empty()) {
+        try { z_threshold = std::stod(z); } catch (...) {}
+    }
+    if (field.empty()) {
+        Json::Value err; err["error"] = "field query param required";
+        auto resp = drogon::HttpResponse::newHttpJsonResponse(err);
+        resp->setStatusCode(drogon::k400BadRequest);
+        cb(resp);
+        return;
+    }
+    auto points = anomaly_svc_.detect(id, test_id, field, from_ts, to_ts, z_threshold);
+    Json::Value arr{Json::arrayValue};
+    for (const auto& p : points) {
+        Json::Value o;
+        o["timestamp"] = p.point.timestamp;
+        o["value"]     = p.point.value;
+        o["status"]    = util::status_to_string(p.point.status);
+        o["severity"]  = util::severity_to_string(p.point.severity);
+        o["is_anomaly"] = p.is_anomaly;
+        o["z_score"]    = p.z_score;
+        arr.append(o);
+    }
+    Json::Value resp;
+    resp["module_id"] = id;
+    resp["test_id"]   = test_id;
+    resp["field"]     = field;
+    resp["z_threshold"] = z_threshold;
+    resp["points"]     = arr;
     cb(drogon::HttpResponse::newHttpJsonResponse(resp));
 }
 
