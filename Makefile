@@ -176,7 +176,7 @@ docker-shell: docker-image
 docker-image-server:
 	@if ! docker image inspect $(DOCKER_SERVER_IMAGE) >/dev/null 2>&1; then \
 		echo "Building Docker image $(DOCKER_SERVER_IMAGE) for x86 Ubuntu..."; \
-		make -C docker build-server; \
+		make -C docker build-server IMAGE_NAME=$(DOCKER_SERVER_IMAGE); \
 	else \
 		echo "Docker image $(DOCKER_SERVER_IMAGE) already exists."; \
 	fi
