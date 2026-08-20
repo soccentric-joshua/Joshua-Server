@@ -20,6 +20,7 @@
 #include "services/ThresholdService.h"
 #include "services/AnomalyService.h"
 #include "services/CompareService.h"
+#include "services/BaselineService.h"
 
 #include "grpc_server/HalServiceImpl.h"
 #include "grpc_server/ClientServiceImpl.h"
@@ -108,6 +109,7 @@ int main() {
     joshua::ThresholdService     threshold_svc;
     joshua::AnomalyService       anomaly_svc;
     joshua::CompareService       compare_svc;
+    joshua::BaselineService      baseline_svc;
 
     // --- Orchestration ---
     joshua::orchestration::RunManager      run_mgr{run_svc, log_svc, notif_svc};
@@ -160,7 +162,8 @@ int main() {
                                         schedule_svc,
                                         ota_svc,
                                         notif_svc,
-                                        compare_svc);
+                                        compare_svc,
+                                        baseline_svc);
 
     spdlog::info("Starting Drogon HTTP server on {}", settings.network.http_listen);
     drogon::app().run();  // blocks

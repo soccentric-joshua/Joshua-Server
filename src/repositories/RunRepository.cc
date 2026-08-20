@@ -142,6 +142,19 @@ void RunRepository::set_baseline(const std::string& id, const std::string& mode)
         "UPDATE runs SET baseline_flag=TRUE WHERE id=$1::UUID",  id.c_str());
 }
 
+std::optional<Run> RunRepository::find_baseline_run(const std::string& mode) {
+    auto db = db::get_db_client();
+    auto rows = db->execSqlSync(
+        "SELECT id,  name,  description,  test_config_snapshot::TEXT,  mode,  status, "
+        "  started_at::TEXT,  ended_at::TEXT,  error_message,  tags::TEXT,  notes, "
+        "  baseline_flag,  attached_files::TEXT,  created_at::TEXT,  created_by::TEXT"
+        " FROM runs WHERE mode = $1 AND baseline_flag = TRUE"
+        " ORDER BY created_at DESC LIMIT 1",
+        mode.c_str());
+    if (rows.empty()) return std::nullopt;
+    return row_to_run(rows[0]);
+}
+
 void RunRepository::remove(const std::string& id) {
     auto db = db::get_db_client();
     db->execSqlSync("DELETE FROM runs WHERE id=$1::UUID",  id.c_str());

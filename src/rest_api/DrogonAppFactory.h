@@ -13,6 +13,7 @@
 #include "services/OtaService.h"
 #include "services/NotificationService.h"
 #include "services/CompareService.h"
+#include "services/BaselineService.h"
 
 #include <drogon/drogon.h>
 
@@ -31,6 +32,7 @@ void configure_drogon_app(const Settings&          settings,
                            ScheduleService&         schedule_svc,
                            OtaService&              ota_svc,
                            NotificationService&     notif_svc,
-                           CompareService&          cmp_svc);
+                           CompareService&          cmp_svc,
+                           BaselineService&         baseline_svc);
 
 }  // namespace joshua::rest

@@ -326,6 +326,48 @@ std::vector<double> ResultRepository::find_distribution(
     return out;
 }
 
+// ── find_module_heatmap ──────────────────────────────────────────────────────
+
+std::vector<HeatmapCell> ResultRepository::find_module_heatmap(
+        const std::string& module_id,
+        const std::string& test_id,
+        const std::string& field,
+        const std::string& from_ts,
+        const std::string& to_ts) {
+    auto db = db::get_db_client();
+    auto rows = db->execSqlSync(
+        "SELECT test_id, timestamp::TEXT,"
+        "       (metrics -> $3 ->> 'value')::DOUBLE PRECISION AS val,"
+        "       status, severity"
+        " FROM results"
+        " WHERE module_id = $1"
+        "   AND ($2 = '' OR test_id = $2)"
+        "   AND parent_id IS NULL"
+        "   AND metrics ? $3"
+        "   AND metrics -> $3 ->> 'type' IN ('double','int')"
+        "   AND timestamp >= $4::TIMESTAMPTZ"
+        "   AND timestamp <= $5::TIMESTAMPTZ"
+        " ORDER BY test_id, timestamp ASC",
+        module_id.c_str(),
+        test_id.c_str(),
+        field.c_str(),
+        from_ts.c_str(),
+        to_ts.c_str());
+
+    std::vector<HeatmapCell> out;
+    out.reserve(rows.size());
+    for (const auto& r : rows) {
+        HeatmapCell c;
+        c.test_id   = r["test_id"].as<std::string>();
+        c.timestamp = r["timestamp"].as<std::string>();
+        c.value     = r["val"].as<double>();
+        c.status    = r["status"].as<int16_t>();
+        c.severity  = r["severity"].as<int16_t>();
+        out.push_back(c);
+    }
+    return out;
+}
+
 // ── find_for_compare ──────────────────────────────────────────────────────────
 
 std::vector<CompareEntry> ResultRepository::find_for_compare(
@@ -365,6 +407,32 @@ std::vector<CompareEntry> ResultRepository::find_for_compare(
             e.run_b_status = r["run_b_status"].as<int16_t>();
         e.run_a_severity = r["run_a_severity"].as<int16_t>();
         e.run_b_severity = r["run_b_severity"].as<int16_t>();
+        out.push_back(e);
+    }
+    return out;
+}
+
+// ── find_last_metrics ────────────────────────────────────────────────────────
+
+std::vector<LastMetricsEntry> ResultRepository::find_last_metrics(
+        const std::string& run_id) {
+    auto db = db::get_db_client();
+    auto rows = db->execSqlSync(
+        "SELECT DISTINCT ON (module_id, test_id)"
+        "       module_id, test_id, metrics::TEXT, timestamp::TEXT"
+        " FROM results"
+        " WHERE run_id = $1::UUID AND parent_id IS NULL"
+        " ORDER BY module_id, test_id, timestamp DESC",
+        run_id.c_str());
+
+    std::vector<LastMetricsEntry> out;
+    out.reserve(rows.size());
+    for (const auto& r : rows) {
+        LastMetricsEntry e;
+        e.module_id    = r["module_id"].as<std::string>();
+        e.test_id      = r["test_id"].as<std::string>();
+        e.metrics_json = r["metrics"].as<std::string>();
+        e.timestamp    = r["timestamp"].as<std::string>();
         out.push_back(e);
     }
     return out;

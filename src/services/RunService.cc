@@ -187,6 +187,14 @@ std::vector<double> RunService::get_distribution(const std::string& module_id,
     return result_repo_.find_distribution(module_id, test_id, field, run_ids);
 }
 
+std::vector<HeatmapCell> RunService::get_module_heatmap(const std::string& module_id,
+                                                          const std::string& test_id,
+                                                          const std::string& field,
+                                                          const std::string& from_ts,
+                                                          const std::string& to_ts) {
+    return result_repo_.find_module_heatmap(module_id, test_id, field, from_ts, to_ts);
+}
+
 std::vector<CompareEntry> RunService::get_compare(const std::string& run_a,
                                                    const std::string& run_b) {
     return result_repo_.find_for_compare(run_a, run_b);

@@ -95,6 +95,12 @@ public:
                                           const std::string& field,
                                           const std::vector<std::string>& run_ids);
 
+    std::vector<HeatmapCell> get_module_heatmap(const std::string& module_id,
+                                                 const std::string& test_id,
+                                                 const std::string& field,
+                                                 const std::string& from_ts,
+                                                 const std::string& to_ts);
+
     std::vector<CompareEntry> get_compare(const std::string& run_a,
                                            const std::string& run_b);
 

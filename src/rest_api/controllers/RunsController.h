@@ -1,13 +1,14 @@
 #pragma once
 // rest_api/controllers/RunsController.h
 #include "services/RunService.h"
+#include "services/BaselineService.h"
 #include <drogon/HttpController.h>
 
 namespace joshua::rest {
 
 class RunsController : public drogon::HttpController<RunsController, false> {
 public:
-    explicit RunsController(RunService& svc);
+    explicit RunsController(RunService& svc, BaselineService& baseline_svc);
 
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(RunsController::list,    "/api/v1/runs",                  drogon::Get);
@@ -20,6 +21,7 @@ public:
     ADD_METHOD_TO(RunsController::events,   "/api/v1/runs/{id}/events",       drogon::Get);
     ADD_METHOD_TO(RunsController::remove,   "/api/v1/runs/{id}",              drogon::Delete);
     ADD_METHOD_TO(RunsController::baseline, "/api/v1/runs/{id}/baseline",     drogon::Post);
+    ADD_METHOD_TO(RunsController::baseline_diff, "/api/v1/runs/{id}/baseline-diff", drogon::Get);
     ADD_METHOD_TO(RunsController::rerun,    "/api/v1/runs/{id}/rerun",        drogon::Post);
     ADD_METHOD_TO(RunsController::export_run, "/api/v1/runs/{id}/export",     drogon::Get);
     ADD_METHOD_TO(RunsController::report,   "/api/v1/runs/{id}/report",       drogon::Get);
@@ -57,6 +59,10 @@ public:
     void baseline(const drogon::HttpRequestPtr&,
                   std::function<void(const drogon::HttpResponsePtr&)>&&,
                   std::string id);
+    // GET /api/v1/runs/{id}/baseline-diff?drift_pct=5 — baseline drift comparison
+    void baseline_diff(const drogon::HttpRequestPtr&,
+                       std::function<void(const drogon::HttpResponsePtr&)>&&,
+                       std::string id);
     // POST /api/v1/runs/{id}/rerun
     void rerun(const drogon::HttpRequestPtr&,
                std::function<void(const drogon::HttpResponsePtr&)>&&,
@@ -71,7 +77,8 @@ public:
                 std::string id);
 
 private:
-    RunService& svc_;
+    RunService&       svc_;
+    BaselineService&  baseline_svc_;
 };
 
 }  // namespace joshua::rest

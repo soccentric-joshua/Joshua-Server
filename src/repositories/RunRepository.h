@@ -48,6 +48,11 @@ public:
     void update_notes(const std::string& id, const std::string& notes);
     void update_tags(const std::string& id, const std::string& tags_json);
     void set_baseline(const std::string& id, const std::string& mode);
+
+    // Returns the current baseline run for a mode (baseline_flag = TRUE), if any.
+    // A mode has at most one baseline (set_baseline clears prior baselines first).
+    std::optional<Run> find_baseline_run(const std::string& mode);
+
     void remove(const std::string& id);
 };
 

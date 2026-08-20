@@ -142,7 +142,8 @@ static void append_csv_rows(std::ostringstream& out, const Result& r,
 
 // ── Controller methods ────────────────────────────────────────────────────────
 
-RunsController::RunsController(RunService& svc) : svc_(svc) {}
+RunsController::RunsController(RunService& svc, BaselineService& baseline_svc)
+    : svc_(svc), baseline_svc_(baseline_svc) {}
 
 void RunsController::list(const drogon::HttpRequestPtr& req,
                            std::function<void(const drogon::HttpResponsePtr&)>&& cb) {
@@ -365,6 +366,46 @@ void RunsController::baseline(const drogon::HttpRequestPtr& req,
         resp->setStatusCode(drogon::k404NotFound);
         cb(resp);
     }
+}
+
+void RunsController::baseline_diff(
+    const drogon::HttpRequestPtr& req,
+    std::function<void(const drogon::HttpResponsePtr&)>&& cb,
+    std::string id) {
+    double drift_pct = 5.0;
+    auto dp = req->getParameter("drift_pct");
+    if (!dp.empty()) drift_pct = std::stod(dp);
+
+    auto entries = baseline_svc_.compare_to_baseline(id, drift_pct);
+
+    Json::Value arr{Json::arrayValue};
+    for (const auto& e : entries) {
+        Json::Value o;
+        o["module_id"] = e.module_id;
+        o["test_id"]   = e.test_id;
+        o["baseline_status"] = util::status_to_string(e.baseline_status);
+        o["current_status"]  = util::status_to_string(e.current_status);
+        o["classification"]  = e.classification;
+        Json::Value drifts{Json::arrayValue};
+        for (const auto& d : e.drifts) {
+            Json::Value dv;
+            dv["key"]            = d.key;
+            dv["baseline_value"] = d.baseline_value;
+            dv["current_value"]  = d.current_value;
+            dv["delta"]          = d.delta;
+            dv["pct"]            = d.pct;
+            dv["numeric"]        = d.numeric;
+            drifts.append(dv);
+        }
+        o["drifts"] = drifts;
+        arr.append(o);
+    }
+    Json::Value resp;
+    resp["run_id"]      = id;
+    resp["drift_pct"]   = drift_pct;
+    resp["entries"]     = arr;
+    resp["has_baseline"] = baseline_svc_.has_baseline(id);
+    cb(drogon::HttpResponse::newHttpJsonResponse(resp));
 }
 
 void RunsController::rerun(const drogon::HttpRequestPtr& req,

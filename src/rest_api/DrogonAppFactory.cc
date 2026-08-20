@@ -15,6 +15,7 @@
 #include "rest_api/controllers/BackupController.h"
 #include "rest_api/controllers/SettingsController.h"
 #include "services/CompareService.h"
+#include "services/BaselineService.h"
 
 #include <spdlog/spdlog.h>
 
@@ -31,7 +32,8 @@ void configure_drogon_app(const Settings&      settings,
                            ScheduleService&     schedule_svc,
                            OtaService&          ota_svc,
                            NotificationService& notif_svc,
-                           CompareService&      cmp_svc) {
+                           CompareService&      cmp_svc,
+                           BaselineService&     baseline_svc) {
     auto& app = drogon::app();
 
     const auto& http = settings.network.http_listen;
@@ -47,7 +49,7 @@ void configure_drogon_app(const Settings&      settings,
 
     app.registerController(std::make_shared<HealthController>());
     app.registerController(std::make_shared<AuthController>(auth_svc));
-    app.registerController(std::make_shared<RunsController>(run_svc));
+    app.registerController(std::make_shared<RunsController>(run_svc, baseline_svc));
     app.registerController(std::make_shared<LogsController>(log_svc));
     app.registerController(std::make_shared<ModulesController>(mod_svc, run_svc, cmp_svc));
     app.registerController(std::make_shared<TargetsController>(target_svc));

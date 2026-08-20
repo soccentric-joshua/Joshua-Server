@@ -1,5 +1,6 @@
 #include "rest_api/controllers/ModulesController.h"
 #include "util/Errors.h"
+#include "util/ResultConvert.h"
 #include <drogon/HttpResponse.h>
 #include <json/json.h>
 #include <sstream>
@@ -105,6 +106,40 @@ void ModulesController::distribution(
     resp["test_id"]     = test_id;
     resp["field"]       = field;
     resp["distribution"] = arr;
+    cb(drogon::HttpResponse::newHttpJsonResponse(resp));
+}
+
+void ModulesController::heatmap(
+    const drogon::HttpRequestPtr& req,
+    std::function<void(const drogon::HttpResponsePtr&)>&& cb,
+    std::string id) {
+    std::string test_id = req->getParameter("test_id");
+    std::string field   = req->getParameter("field");
+    std::string from_ts = req->getParameter("from");
+    std::string to_ts   = req->getParameter("to");
+    if (field.empty()) {
+        Json::Value err; err["error"] = "field query param required";
+        auto resp = drogon::HttpResponse::newHttpJsonResponse(err);
+        resp->setStatusCode(drogon::k400BadRequest);
+        cb(resp);
+        return;
+    }
+    auto cells = run_svc_.get_module_heatmap(id, test_id, field, from_ts, to_ts);
+    Json::Value arr{Json::arrayValue};
+    for (const auto& c : cells) {
+        Json::Value o;
+        o["test_id"] = c.test_id;
+        o["timestamp"] = c.timestamp;
+        o["value"]     = c.value;
+        o["status"]    = util::status_to_string(c.status);
+        o["severity"]  = util::severity_to_string(c.severity);
+        arr.append(o);
+    }
+    Json::Value resp;
+    resp["module_id"] = id;
+    resp["test_id"]   = test_id;
+    resp["field"]     = field;
+    resp["cells"]     = arr;
     cb(drogon::HttpResponse::newHttpJsonResponse(resp));
 }
 

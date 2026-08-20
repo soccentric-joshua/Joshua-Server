@@ -97,6 +97,26 @@ struct CompareEntry {
     std::string run_b_metrics_json;
 };
 
+// ── HeatmapCell ──────────────────────────────────────────────────────────────
+// A single cell for the module heatmap: the numeric value of a metric at a point
+// in time for a given test, plus status/severity so the UI can colour it.
+struct HeatmapCell {
+    std::string test_id;
+    std::string timestamp;   // ISO-8601 UTC
+    double      value  = 0.0;   // extracted numeric value of the requested field
+    int16_t     status   = 0;   // TestStatus enum integer (for colouring)
+    int16_t     severity = 0;   // TestSeverity enum integer
+};
+
+// ── LastMetricsEntry ─────────────────────────────────────────────────────────
+// Most-recent result's typed metrics per (module_id, test_id) for a run.
+struct LastMetricsEntry {
+    std::string module_id;
+    std::string test_id;
+    std::string metrics_json;   // serialised typed-map JSON: { key → {type,value} }
+    std::string timestamp;      // ISO-8601 UTC
+};
+
 // ── ResultRepository ─────────────────────────────────────────────────────────
 class ResultRepository {
 public:
@@ -129,9 +149,22 @@ public:
                                            const std::string& field,
                                            const std::vector<std::string>& run_ids);
 
+    // Heatmap: returns the numeric value of a metric per (test_id, timestamp) for a
+    // module over a time range.  test_id may be empty to span all tests of the module.
+    // Only results where metrics->>field is numeric (type double/int) are returned.
+    std::vector<HeatmapCell> find_module_heatmap(const std::string& module_id,
+                                                  const std::string& test_id,
+                                                  const std::string& field,
+                                                  const std::string& from_ts,
+                                                  const std::string& to_ts);
+
     // Compare: returns per-(module_id,test_id) last-status/severity for two runs.
     std::vector<CompareEntry> find_for_compare(const std::string& run_a,
                                                 const std::string& run_b);
+
+    // Returns the metrics_json of the most-recent top-level result per
+    // (module_id, test_id) for a run.  Used by baseline drift computation.
+    std::vector<LastMetricsEntry> find_last_metrics(const std::string& run_id);
 
     // Lazy subtest fetch: returns direct children of a result (one level only).
     std::vector<Result> get_subtests(const std::string& parent_id);
