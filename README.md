@@ -1,4 +1,105 @@
-# Joshua Server The **Joshua Server** is the central orchestration and data-collection backend for the Joshua IV&V (Independent Validation & Verification) tool suite. It exposes: - A **gRPC service** (`HalService`) for the embedded HAL Client App to submit test results and receive streaming commands.
+# Joshua-Server
+
+## Project Summary
+
+Joshua-Server is the central C++ orchestration and data-collection backend for Joshua IV&V. Its architecture has an embedded Client connecting over gRPC to `HalService`, while the dashboard and external tools use a Drogon REST API on `/api/v1`. The service is designed around PostgreSQL, versioned SQL migrations, a service layer for runs, logs, authentication, and OTA, and repositories for persistence. Optional Prometheus metrics and Docker development assets are also documented.
+
+The source tree contains configuration and logging setup, database clients and migration code, gRPC server runners and service implementations, and stream backpressure support. Environment variables configure gRPC and HTTP listeners, database credentials, session signing, registry location, OTA storage, and log level. The API inventory includes health, login and token creation, module listing, run creation/details, logs and SSE tailing, target heartbeat, OTA upload/trigger, trends, distributions, heatmaps, anomaly detection, run comparison, baseline diffs, and typed thresholds. A YAML module registry and startup migrations define important runtime contracts.
+
+The repository includes CMake presets, Docker Compose, vcpkg configuration, unit tests for services and utilities, migration tests, a config test, and a stream backpressure test. The existing implementation-status notes say database, CRUD, ingest, and gRPC stages are not complete in that plan, so this README does not upgrade them merely because source files exist. Code surfaces are marked partial where tests or status notes do not establish end-to-end behavior. Live PostgreSQL, authenticated REST, embedded-client streaming, OTA storage, and production deployment remain manual validation work.
+
+## Feature Inventory
+
+| # | Name / Description | Implemented? | Test Coverage? | Manual Test |
+|---:|---|---|---|---|
+| 1 | C++ executable and CMake/vcpkg build | Implemented | Partial; test presets exist | [ ] Manual verification required |
+| 2 | Environment and CLI configuration | Implemented | Partial; config test | [ ] Manual verification required |
+| 3 | Structured logging and log levels | Implemented | Unknown | [ ] Manual verification required |
+| 4 | PostgreSQL client and migrations | Partial; plan marks DB stage incomplete | Migration/config tests | [ ] Manual verification required |
+| 5 | gRPC `HalService` listener | Partial; end-to-end flow unestablished | Unknown | [ ] Manual verification required |
+| 6 | REST `/api/v1` service | Partial; route surface documented | Partial route tests | [ ] Manual verification required |
+| 7 | Sessions and API tokens | Implemented | Partial auth coverage | [ ] Manual verification required |
+| 8 | Module registry/listing | Implemented | `ModuleRegistryTest.cc` | [ ] Manual verification required |
+| 9 | Run orchestration, ingest, and persistence | Partial; plan identifies unfinished stages | Partial run tests | [ ] Manual verification required |
+| 10 | Logs and live SSE tail | Implemented | Unknown integration coverage | [ ] Manual verification required |
+| 11 | OTA upload/trigger workflow | Partial | Unknown | [ ] Manual verification required |
+| 12 | Trends, distributions, heatmaps, anomalies, comparisons, baselines | Implemented | Partial service tests | [ ] Manual verification required |
+| 13 | Typed thresholds and anomaly services | Implemented | `ThresholdServiceTest.cc`, `AnomalyServiceTest.cc` | [ ] Manual verification required |
+| 14 | Stream backpressure handling | Implemented | `StreamBackpressureTest.cc` | [ ] Manual verification required |
+| 15 | Docker Compose development environment | Implemented | Unknown | [ ] Manual verification required |
+| 16 | Optional Prometheus metrics | Partial | Unknown | [ ] Manual verification required |
+
+## Build and Test
+
+```bash
+cmake --preset debug && cmake --build build/debug
+cmake --preset test && cmake --build build/test
+ctest --test-dir build/test --output-on-failure
+```
+
+Docker setup is documented in `docker/README.md`; environment defaults are in `.env.example`.# Joshua-Server
+
+## Project Summary
+
+Joshua-Server is the central C++ orchestration and data-collection backend for
+Joshua IV&V. Its intended architecture has an embedded Client connecting over
+gRPC to `HalService`, while the dashboard and external tools use a Drogon REST
+API on `/api/v1`. The service is designed around PostgreSQL, versioned SQL
+migrations, a service layer for runs/logs/authentication/OTA, and repositories
+for persistence. Optional Prometheus metrics and Docker development assets are
+also documented.
+
+The source tree contains configuration and logging setup, database clients and
+migration code, gRPC server runners and service implementations, and stream
+backpressure support. Environment variables configure gRPC and HTTP listeners,
+database credentials, session signing, registry location, OTA storage, and log
+level. The API inventory includes health, login and token creation, module
+listing, run creation/details, logs and SSE tailing, target heartbeat, OTA
+upload/trigger, trends, distributions, heatmaps, anomaly detection, run
+comparison, baseline diffs, and typed thresholds. A YAML module registry and
+startup migrations define important runtime contracts.
+
+The repository includes CMake presets, Docker Compose, vcpkg configuration,
+unit tests for services and utilities, migration tests, a config test, and a
+stream backpressure test. The older implementation-status section says the
+database, CRUD, ingest, and gRPC stages are not complete in that plan, so this
+README does not upgrade them to “implemented” merely because corresponding
+source files exist. The feature table records code surfaces as partial where
+the checked-in tests or status notes do not establish end-to-end behavior.
+Live PostgreSQL, authenticated REST, embedded-client streaming, OTA storage,
+and production deployment remain manual validation work.
+
+## Feature Inventory
+
+| # | Name / Description | Implemented? | Test Coverage? | Manual Test |
+|---:|---|---|---|---|
+| 1 | C++ server executable and CMake/vcpkg build | Implemented | Partial; CMake test presets exist | [ ] Manual verification required |
+| 2 | Configuration from environment and CLI flags | Implemented | Partial; config test exists | [ ] Manual verification required |
+| 3 | Structured logging and log-level control | Implemented | Unknown | [ ] Manual verification required |
+| 4 | PostgreSQL database client and schema migrations | Partial; implementation and migration tests exist, plan marks DB stage incomplete | Covered by migration/config tests | [ ] Manual verification required |
+| 5 | gRPC `HalService` listener | Partial; server surface exists, end-to-end client flow is not established | Unknown | [ ] Manual verification required |
+| 6 | REST `/api/v1` service | Partial; route/service surface is documented | Partial; route-specific tests vary | [ ] Manual verification required |
+| 7 | Authentication sessions and API tokens | Implemented | Partial; auth-related service tests exist | [ ] Manual verification required |
+| 8 | Module registry and module listing | Implemented | Covered by `ModuleRegistryTest.cc` | [ ] Manual verification required |
+| 9 | Run orchestration, result ingest, and persistence | Partial; plan identifies unfinished ingest/CRUD stages | Partial; run service tests exist | [ ] Manual verification required |
+| 10 | Log retrieval and live SSE tail | Implemented | Unknown; stream behavior needs integration validation | [ ] Manual verification required |
+| 11 | OTA upload and trigger workflow | Partial | Unknown | [ ] Manual verification required |
+| 12 | Trends, distributions, heatmaps, anomalies, comparisons, and baselines | Implemented | Partial; service tests cover selected behavior | [ ] Manual verification required |
+| 13 | Typed threshold rules and anomaly services | Implemented | Covered by `ThresholdServiceTest.cc` and `AnomalyServiceTest.cc` | [ ] Manual verification required |
+| 14 | Stream backpressure handling | Implemented | Covered by `StreamBackpressureTest.cc` | [ ] Manual verification required |
+| 15 | Docker Compose development environment | Implemented | Unknown | [ ] Manual verification required |
+| 16 | Prometheus metrics | Partial; documented as optional | Unknown | [ ] Manual verification required |
+
+## Build and Test
+
+```bash
+cmake --preset debug && cmake --build build/debug
+cmake --preset test && cmake --build build/test
+ctest --test-dir build/test --output-on-failure
+```
+
+Docker setup is documented in `docker/README.md`; API details and environment
+defaults remain in this repository’s existing sections and `.env.example`.
 - A **REST/HTTP API** (`/api/v1`) for the Web UI and external tooling.
 - A **PostgreSQL** backend with versioned migrations.
 - **OTA firmware upgrade** orchestration.
