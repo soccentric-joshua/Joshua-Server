@@ -48,9 +48,9 @@ validation work.
 ## Build and Test
 
 ```bash
-cmake --preset debug && cmake --build build/debug
-cmake --preset test && cmake --build build/test
-ctest --test-dir build/test --output-on-failure
+# The build is Docker-based — the default and only build path:
+make build          # docker-build-server (x86 production)
+make test           # ctest (unit label) inside the Docker build container
 ```
 
 Docker setup is documented in `docker/README.md`; environment defaults are in `.env.example`.#
@@ -72,7 +72,7 @@ cd docker ./setup.sh
 5. You're ready to build! Then enter the container and build:
 ```bash
 docker exec -it joshua-dev bash
-cmake --preset debug && cmake --build build/debug
+make build          # Docker x86 build
 ``` ### Alternative: VS Code Dev Container Open this project in VS Code and:
 1. Install the "Dev Containers" extension
 2. Press `F1` → "Dev Containers: Reopen in Container"
@@ -103,14 +103,13 @@ docker/docker-compose.yml up --build
 
 ## Building ```bash
 # Debug (default dev preset)
-cmake --preset debug
 cmake --build build/debug # Release
-cmake --preset release
+make docker-build-server   # Docker (production profile)
 cmake --build build/release # Run tests
-cmake --preset test
+make test           # Docker ctest
 cmake --build build/test
 ctest --test-dir build/test --output-on-failure # ASan
-cmake --preset asan
+# asan preset runs inside the Docker build container
 cmake --build build/asan
 ````
 
